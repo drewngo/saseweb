@@ -80,11 +80,10 @@
     }
 
     function renderPodium() {
-      const medals = ["🥇", "🥈", "🥉"];
-      const top = rows.filter((r) => r.total_points > 0).slice(0, 3);
+            const top = rows.filter((r) => r.total_points > 0).slice(0, 3);
       podiumEl.innerHTML = top.map((r, i) => `
         <div class="podium-spot p${i + 1}">
-          <div class="medal" aria-hidden="true">${medals[r.rank - 1] || medals[2]}</div>
+          <div class="medal medal-${Math.min(r.rank, 3)}" aria-label="Rank ${r.rank}">${r.rank}</div>
           <div class="name">${esc(r.name)}</div>
           <div class="pts">${r.total_points}</div>
           <div class="muted sub">${esc(r.major || "")}</div>

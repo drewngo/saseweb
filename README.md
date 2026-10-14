@@ -100,14 +100,17 @@ Logo files live in `site/assets/logo/`:
 | File | Used for |
 | --- | --- |
 | `sase-wordmark.png` / `sase-wordmark-dark.png` | Header (light / dark mode, swapped automatically) |
-| `sase-icon.png` | Hero and footer (transparent, for dark backgrounds) |
+| `sase-mark.png` / `sase-mark-dark.png` | Hero and footer icon (light / dark mode) |
+| `sase-icon.png` | Gold/cream icon for use on navy backgrounds |
 | `sase-square.png`, `favicon-32.png`, `apple-touch-icon.png` | Link previews, browser tab, phone home screen |
 
 The color palette comes from the logos and is set at the top of `site/css/style.css`:
-- navy `#141b4d` and `#253453`
-- light blue `#89abe3`
-- gold `#d6c5b5`
-- cream `#e3d6ce`
+- navy `#1f2b6b`
+- light blue `#8fb4f0`
+- gold `#e8cfa8`
+- cream `#f3e9dc`
+
+These are slightly brightened from the logo files.
 
 Headings use the Saira font from Google Fonts.
 

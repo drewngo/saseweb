@@ -32,7 +32,10 @@ document.querySelector("#site-header").innerHTML = `
 document.querySelector("#site-footer").innerHTML = `
   <div class="container footer-inner">
     <div class="footer-brand">
-      <img src="assets/logo/sase-icon.png" alt="" width="47" height="64" />
+      <picture>
+        <source srcset="assets/logo/sase-mark-dark.png" media="(prefers-color-scheme: dark)" />
+        <img src="assets/logo/sase-mark.png" alt="" width="32" height="44" />
+      </picture>
       <div>
         <strong>${config.orgFullName}</strong><br />
         ${config.school}<br />
