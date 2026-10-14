@@ -93,16 +93,26 @@ A member can only get attendance points once per event, so double-clicking or re
 
 **Everything in the database is publicly readable,** since that's how the leaderboard works. Only store names, majors, and class years. **Never store** emails, student IDs, or phone numbers. Let members know their name and points will be shown publicly.
 
-## Replacing placeholders
+## Branding & placeholders
 
-The dashed boxes labelled LOGO, Photo, and Sponsor are placeholders. Search the HTML for `logo-placeholder` and `img-placeholder`.
+Logo files live in `site/assets/logo/`:
 
-1. Put image files in `site/assets/`.
-2. Swap each placeholder `<div>` for an `<img>`, for example `<img src="assets/logo.png" alt="SASE WSU logo" class="logo-sm">`.
+| File | Used for |
+| --- | --- |
+| `sase-wordmark.png` / `sase-wordmark-dark.png` | Header (light / dark mode, swapped automatically) |
+| `sase-icon.png` | Hero and footer (transparent, for dark backgrounds) |
+| `sase-square.png`, `favicon-32.png`, `apple-touch-icon.png` | Link previews, browser tab, phone home screen |
+
+The color palette comes from the logos and is set at the top of `site/css/style.css`:
+- navy `#141b4d` and `#253453`
+- light blue `#89abe3`
+- gold `#d6c5b5`
+- cream `#e3d6ce`
+
+Headings use the Saira font from Google Fonts.
+
+Officer photos and sponsor logos are still placeholders. These are the dashed boxes; search the HTML for `img-placeholder` and `logo-placeholder`. Put image files in `site/assets/`, then swap each placeholder `<div>` for an `<img>`.
 
 Other things to update:
-
-- **Theme colors:** the top of `site/css/style.css`.
 - **Social links, contact email, join link:** `site/js/config.js`.
 - **Officer names:** the "Executive board" section in `site/index.html`.
-- **Favicon:** `site/assets/favicon.svg`.

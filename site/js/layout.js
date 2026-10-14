@@ -14,11 +14,11 @@ document.querySelector("#site-header").innerHTML = `
   ${isDemo ? `<div class="demo-banner">Demo mode: showing sample data. Add Supabase keys in <code>js/config.js</code> to go live.</div>` : ""}
   <div class="container header-inner">
     <a class="brand" href="index.html">
-      <span class="logo-placeholder logo-sm" title="Logo placeholder">LOGO</span>
-      <span class="brand-text">
-        <strong>${config.orgName}</strong>
-        <small>${config.school}</small>
-      </span>
+      <picture>
+        <source srcset="assets/logo/sase-wordmark-dark.png" media="(prefers-color-scheme: dark)" />
+        <img src="assets/logo/sase-wordmark.png" alt="${config.orgName}" width="168" height="36" />
+      </picture>
+      <span class="brand-school">Wichita State<br />University</span>
     </a>
     <button class="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Menu">
       <span></span><span></span><span></span>
@@ -31,10 +31,13 @@ document.querySelector("#site-header").innerHTML = `
 
 document.querySelector("#site-footer").innerHTML = `
   <div class="container footer-inner">
-    <div>
-      <strong>${config.orgFullName}</strong><br />
-      ${config.school}<br />
-      <a href="mailto:${config.contactEmail}">${config.contactEmail}</a>
+    <div class="footer-brand">
+      <img src="assets/logo/sase-icon.png" alt="" width="47" height="64" />
+      <div>
+        <strong>${config.orgFullName}</strong><br />
+        ${config.school}<br />
+        <a href="mailto:${config.contactEmail}">${config.contactEmail}</a>
+      </div>
     </div>
     <div class="footer-links">
       <a href="${config.links.instagram}">Instagram</a>
