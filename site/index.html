@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SASE at Wichita State</title>
+  <meta name="description" content="Society of Asian Scientists and Engineers at Wichita State University." />
+  <link rel="icon" href="assets/favicon.svg" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header id="site-header"></header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-inner">
+        <div>
+          <p class="eyebrow">Wichita State University Chapter</p>
+          <h1>Society of Asian Scientists and Engineers</h1>
+          <p class="lead">
+            Preparing Asian heritage scientists and engineers for success in the global business world,
+            celebrating diversity on campus and in the workplace, and giving back to our community.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-accent" href="#join">Become a member</a>
+            <a class="btn btn-ghost" href="events.html">See upcoming events</a>
+          </div>
+        </div>
+        <div class="logo-placeholder logo-lg" title="Chapter logo placeholder">Chapter Logo</div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-head"><h2>What we do</h2></div>
+        <div class="pillars">
+          <div class="card pillar">
+            <div class="icon" aria-hidden="true">💼</div>
+            <h3>Professional development</h3>
+            <p class="muted">Resume workshops, mock interviews, industry panels, and the SASE national and regional conferences.</p>
+          </div>
+          <div class="card pillar">
+            <div class="icon" aria-hidden="true">🏮</div>
+            <h3>Culture &amp; diversity</h3>
+            <p class="muted">Celebrate Asian heritage and build an inclusive community across every STEM major.</p>
+          </div>
+          <div class="card pillar">
+            <div class="icon" aria-hidden="true">🤝</div>
+            <h3>Community service</h3>
+            <p class="muted">Volunteer around Wichita, mentor younger students, and give back together.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt">
+      <div class="container two-col">
+        <div>
+          <div class="section-head">
+            <h2>Upcoming events</h2>
+            <a href="events.html">Full calendar →</a>
+          </div>
+          <div id="upcoming" class="event-list"><p class="muted">Loading…</p></div>
+        </div>
+        <div>
+          <div class="section-head">
+            <h2>Top members</h2>
+            <a href="leaderboard.html">Leaderboard →</a>
+          </div>
+          <div class="card mini-board" id="top-members"><p class="muted">Loading…</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-head"><h2>Executive board</h2></div>
+        <!-- Replace the placeholders with real names and photos (assets/officers/…). -->
+        <div class="officers">
+          <div class="officer"><div class="img-placeholder">Photo</div><strong>Name</strong><span>President</span></div>
+          <div class="officer"><div class="img-placeholder">Photo</div><strong>Name</strong><span>Vice President</span></div>
+          <div class="officer"><div class="img-placeholder">Photo</div><strong>Name</strong><span>Secretary</span></div>
+          <div class="officer"><div class="img-placeholder">Photo</div><strong>Name</strong><span>Treasurer</span></div>
+          <div class="officer"><div class="img-placeholder">Photo</div><strong>Name</strong><span>Events Chair</span></div>
+          <div class="officer"><div class="img-placeholder">Photo</div><strong>Name</strong><span>Marketing Chair</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt">
+      <div class="container">
+        <div class="section-head"><h2>Sponsors &amp; partners</h2></div>
+        <div class="sponsor-row">
+          <div class="logo-placeholder">Sponsor</div>
+          <div class="logo-placeholder">Sponsor</div>
+          <div class="logo-placeholder">Sponsor</div>
+          <div class="logo-placeholder">Sponsor</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="join">
+      <div class="container">
+        <div class="card" style="text-align:center; padding:40px 20px;">
+          <h2>Join SASE</h2>
+          <p class="lead" style="margin-inline:auto;">
+            Open to all majors and backgrounds. Come to any general body meeting, or sign up below to get on our mailing list.
+          </p>
+          <div class="hero-actions" style="justify-content:center;">
+            <a class="btn" id="join-link" href="#">Sign up</a>
+            <a class="btn btn-ghost" id="discord-link" href="#">Join the Discord</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+
+  <script type="module" src="js/layout.js"></script>
+  <script type="module">
+    import { config } from "./js/config.js";
+    import { upcomingEvents, leaderboard } from "./js/data.js";
+    import { esc, eventCard, showError } from "./js/util.js";
+
+    document.querySelector("#join-link").href = config.links.join;
+    document.querySelector("#discord-link").href = config.links.discord;
+
+    const upcomingEl = document.querySelector("#upcoming");
+    upcomingEvents(3)
+      .then((events) => {
+        upcomingEl.innerHTML = events.length
+          ? events.map((e) => eventCard(e, { compact: true })).join("")
+          : `<p class="muted">No upcoming events yet. Check back soon!</p>`;
+      })
+      .catch((err) => showError(upcomingEl, err));
+
+    const topEl = document.querySelector("#top-members");
+    leaderboard(new Date(config.currentSemester.start + "T00:00:00"))
+      .then((rows) => {
+        const top = rows.filter((r) => r.total_points > 0).slice(0, 5);
+        topEl.innerHTML = top.length
+          ? `<p class="muted" style="margin-bottom:4px;">${esc(config.currentSemester.name)}</p>
+             <ol>${top.map((r) => `<li><span><span class="r">${r.rank}</span>${esc(r.name)}</span><strong>${r.total_points} pts</strong></li>`).join("")}</ol>`
+          : `<p class="muted">No points awarded yet this semester.</p>`;
+      })
+      .catch((err) => showError(topEl, err));
+  </script>
+</body>
+</html>

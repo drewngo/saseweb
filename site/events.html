@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Events · SASE at Wichita State</title>
+  <link rel="icon" href="assets/favicon.svg" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header id="site-header"></header>
+
+  <main class="section">
+    <div class="container">
+      <h1>Events</h1>
+      <p class="lead">Meetings, workshops, socials, and service. Most events earn points toward the leaderboard.</p>
+
+      <div class="calendar" style="margin-top:24px;">
+        <div class="cal-head">
+          <button class="btn btn-ghost btn-sm" id="prev" aria-label="Previous month">←</button>
+          <h2 id="month-label"></h2>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-ghost btn-sm" id="today">Today</button>
+            <button class="btn btn-ghost btn-sm" id="next" aria-label="Next month">→</button>
+          </div>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+      <div class="legend">
+        <span class="cat-general">General</span>
+        <span class="cat-professional">Professional</span>
+        <span class="cat-social">Social</span>
+        <span class="cat-service">Service</span>
+        <span class="cat-cultural">Cultural</span>
+      </div>
+
+      <div class="section-head" style="margin-top:40px;">
+        <h2 id="list-title">This month</h2>
+      </div>
+      <div id="event-list" class="event-list"></div>
+    </div>
+  </main>
+
+  <footer id="site-footer"></footer>
+
+  <script type="module" src="js/layout.js"></script>
+  <script type="module">
+    import { listEvents } from "./js/data.js";
+    import { esc, eventCard, showError } from "./js/util.js";
+
+    const grid = document.querySelector("#cal-grid");
+    const listEl = document.querySelector("#event-list");
+    const listTitle = document.querySelector("#list-title");
+    const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const dayKey = (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+
+    let cursor = new Date();
+    cursor = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+    let monthEvents = [];
+    let selected = null;
+
+    async function render() {
+      const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+      const gridStart = new Date(first);
+      gridStart.setDate(1 - first.getDay());
+      const gridEnd = new Date(gridStart);
+      gridEnd.setDate(gridStart.getDate() + 42);
+
+      document.querySelector("#month-label").textContent =
+        first.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+
+      let events;
+      try {
+        events = await listEvents({ from: gridStart, to: gridEnd });
+      } catch (err) {
+        return showError(listEl, err);
+      }
+      const byDay = new Map();
+      for (const e of events) {
+        const k = dayKey(new Date(e.starts_at));
+        byDay.set(k, [...(byDay.get(k) || []), e]);
+      }
+      monthEvents = events.filter((e) => new Date(e.starts_at).getMonth() === first.getMonth());
+
+      const todayKey = dayKey(new Date());
+      let html = DOW.map((d) => `<div class="cal-dow">${d}</div>`).join("");
+      for (let i = 0; i < 42; i++) {
+        const d = new Date(gridStart);
+        d.setDate(gridStart.getDate() + i);
+        const k = dayKey(d);
+        const evs = byDay.get(k) || [];
+        const cls = ["cal-day",
+          d.getMonth() !== first.getMonth() && "other-month",
+          k === todayKey && "today",
+          selected && k === dayKey(selected) && "selected"].filter(Boolean).join(" ");
+        html += `
+          <button class="${cls}" data-date="${d.toISOString()}" aria-label="${d.toDateString()}, ${evs.length} event(s)">
+            <span class="num">${d.getDate()}</span>
+            <span class="cal-chips">${evs.map((e) => `<span class="cal-chip cat-${esc(e.category)}" title="${esc(e.title)}">${esc(e.title)}</span>`).join("")}</span>
+          </button>`;
+      }
+      grid.innerHTML = html;
+      renderList(byDay);
+    }
+
+    function renderList(byDay) {
+      let events = monthEvents;
+      if (selected) {
+        events = byDay.get(dayKey(selected)) || [];
+        listTitle.innerHTML = `${esc(selected.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }))}
+          <button class="btn btn-ghost btn-sm" id="clear-day" style="margin-left:8px; vertical-align:middle;">Show whole month</button>`;
+        document.querySelector("#clear-day").onclick = () => { selected = null; render(); };
+      } else {
+        listTitle.textContent = cursor.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+      }
+      listEl.innerHTML = events.length
+        ? events.map((e) => eventCard(e)).join("")
+        : `<p class="muted">No events ${selected ? "on this day" : "this month"}.</p>`;
+    }
+
+    grid.addEventListener("click", (e) => {
+      const btn = e.target.closest(".cal-day");
+      if (!btn) return;
+      const d = new Date(btn.dataset.date);
+      if (d.getMonth() !== cursor.getMonth()) cursor = new Date(d.getFullYear(), d.getMonth(), 1);
+      selected = d;
+      render();
+    });
+    const go = (delta) => { cursor = new Date(cursor.getFullYear(), cursor.getMonth() + delta, 1); selected = null; render(); };
+    document.querySelector("#prev").onclick = () => go(-1);
+    document.querySelector("#next").onclick = () => go(1);
+    document.querySelector("#today").onclick = () => { const t = new Date(); cursor = new Date(t.getFullYear(), t.getMonth(), 1); selected = null; render(); };
+
+    render();
+  </script>
+</body>
+</html>

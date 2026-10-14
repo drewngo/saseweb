@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Officer Admin · SASE at Wichita State</title>
+  <link rel="icon" href="assets/favicon.svg" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header id="site-header"></header>
+
+  <main class="section">
+    <div class="container">
+      <!-- Login -->
+      <div id="login-view" class="card login-card hidden">
+        <h2>Officer login</h2>
+        <p class="muted" id="login-hint">Sign in with the account a site admin created for you in Supabase.</p>
+        <form id="login-form">
+          <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="username" required /></div>
+          <div class="field"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required /></div>
+          <div id="login-msg"></div>
+          <button class="btn" type="submit" style="width:100%;">Sign in</button>
+        </form>
+      </div>
+
+      <!-- Signed in but not in the admins table -->
+      <div id="denied-view" class="card login-card hidden">
+        <h2>Not an admin</h2>
+        <p class="muted">You're signed in as <strong id="denied-email"></strong>, but this account isn't in the <code>admins</code> table. Ask a site admin to add you (see README).</p>
+        <button class="btn btn-ghost" data-signout>Sign out</button>
+      </div>
+
+      <!-- Admin -->
+      <div id="admin-view" class="hidden">
+        <div class="section-head">
+          <h1 style="margin:0;">Officer admin</h1>
+          <div class="toolbar" style="margin:0;">
+            <span class="muted" id="who"></span>
+            <button class="btn btn-ghost btn-sm" data-signout>Sign out</button>
+          </div>
+        </div>
+
+        <div class="tabs" role="tablist">
+          <button role="tab" data-tab="points" aria-selected="true">Award points</button>
+          <button role="tab" data-tab="events" aria-selected="false">Events</button>
+          <button role="tab" data-tab="members" aria-selected="false">Members</button>
+          <button role="tab" data-tab="history" aria-selected="false">Points history</button>
+        </div>
+        <div id="flash"></div>
+
+        <!-- Award points -->
+        <section data-panel="points">
+          <form id="award-form" class="admin-grid">
+            <div class="card">
+              <h3>1. What for?</h3>
+              <div class="field">
+                <label for="award-event">Event</label>
+                <select id="award-event"></select>
+              </div>
+              <div class="field">
+                <label for="award-points">Points each</label>
+                <input id="award-points" type="number" step="1" required />
+                <p class="muted" style="font-size:.85rem; margin:4px 0 0;">Use a negative number to deduct.</p>
+              </div>
+              <div class="field">
+                <label for="award-reason">Reason / note</label>
+                <input id="award-reason" type="text" placeholder="Required when no event is selected" />
+              </div>
+              <button class="btn" type="submit" id="award-submit" style="width:100%;">Award points</button>
+            </div>
+            <div class="card">
+              <h3>2. Who?</h3>
+              <div class="toolbar">
+                <input type="search" id="award-search" placeholder="Filter members…" />
+                <button type="button" class="btn btn-ghost btn-sm" id="select-all">Select shown</button>
+                <button type="button" class="btn btn-ghost btn-sm" id="select-none">Clear</button>
+              </div>
+              <p class="muted" id="selected-count" style="font-size:.9rem;"></p>
+              <div class="member-picker" id="member-picker"></div>
+            </div>
+          </form>
+        </section>
+
+        <!-- Events -->
+        <section data-panel="events" class="hidden">
+          <div class="admin-grid">
+            <form id="event-form" class="card">
+              <h3 id="event-form-title">New event</h3>
+              <input type="hidden" id="ev-id" />
+              <div class="field"><label for="ev-title">Title</label><input id="ev-title" required /></div>
+              <div class="field-row">
+                <div class="field"><label for="ev-start">Starts</label><input id="ev-start" type="datetime-local" required /></div>
+                <div class="field"><label for="ev-end">Ends</label><input id="ev-end" type="datetime-local" /></div>
+              </div>
+              <div class="field"><label for="ev-location">Location</label><input id="ev-location" /></div>
+              <div class="field-row">
+                <div class="field"><label for="ev-category">Category</label><select id="ev-category"></select></div>
+                <div class="field"><label for="ev-points">Points for attending</label><input id="ev-points" type="number" step="1" value="10" /></div>
+              </div>
+              <div class="field"><label for="ev-desc">Description</label><textarea id="ev-desc" rows="3"></textarea></div>
+              <div class="toolbar">
+                <button class="btn" type="submit">Save event</button>
+                <button class="btn btn-ghost" type="button" id="ev-cancel">Clear</button>
+              </div>
+            </form>
+            <div>
+              <div class="toolbar">
+                <select id="ev-filter" style="max-width:200px;">
+                  <option value="upcoming">Upcoming</option>
+                  <option value="past">Past</option>
+                  <option value="all">All</option>
+                </select>
+              </div>
+              <div class="table-wrap"><table><tbody id="event-rows"></tbody></table></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Members -->
+        <section data-panel="members" class="hidden">
+          <div class="admin-grid">
+            <div>
+              <form id="member-form" class="card">
+                <h3 id="member-form-title">Add member</h3>
+                <input type="hidden" id="m-id" />
+                <div class="field"><label for="m-name">Name</label><input id="m-name" required /></div>
+                <div class="field-row">
+                  <div class="field"><label for="m-major">Major</label><input id="m-major" /></div>
+                  <div class="field"><label for="m-year">Class year</label><input id="m-year" placeholder="e.g. Junior" /></div>
+                </div>
+                <label style="display:flex; gap:8px; align-items:center; font-weight:400;"><input type="checkbox" id="m-active" checked /> Show on leaderboard</label>
+                <div class="toolbar" style="margin-top:14px;">
+                  <button class="btn" type="submit">Save member</button>
+                  <button class="btn btn-ghost" type="button" id="m-cancel">Clear</button>
+                </div>
+              </form>
+              <form id="bulk-form" class="card" style="margin-top:20px;">
+                <h3>Bulk add</h3>
+                <p class="muted" style="font-size:.9rem;">One name per line, e.g. pasted from a sign-in sheet.</p>
+                <div class="field"><textarea id="bulk-names" rows="5"></textarea></div>
+                <button class="btn btn-ghost" type="submit">Add all</button>
+              </form>
+            </div>
+            <div>
+              <div class="toolbar"><input type="search" id="member-search" placeholder="Filter members…" /></div>
+              <div class="table-wrap"><table><tbody id="member-rows"></tbody></table></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- History -->
+        <section data-panel="history" class="hidden">
+          <div class="toolbar"><input type="search" id="history-search" placeholder="Filter by member, event, or reason…" /></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>When</th><th>Member</th><th>For</th><th class="num">Points</th><th></th></tr></thead>
+              <tbody id="history-rows"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer id="site-footer"></footer>
+
+  <script type="module" src="js/layout.js"></script>
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>

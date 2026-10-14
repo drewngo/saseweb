@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Leaderboard · SASE at Wichita State</title>
+  <link rel="icon" href="assets/favicon.svg" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header id="site-header"></header>
+
+  <main class="section">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <h1>Points leaderboard</h1>
+          <p class="lead" style="margin:0;">Earn points by attending events, volunteering, and helping run the chapter.</p>
+        </div>
+        <div class="segmented" role="group" aria-label="Time range">
+          <button id="range-semester" aria-pressed="true"></button>
+          <button id="range-all" aria-pressed="false">All time</button>
+        </div>
+      </div>
+
+      <div id="podium" class="podium"></div>
+
+      <div class="toolbar">
+        <input type="search" id="search" placeholder="Find yourself…" aria-label="Search members" />
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Member</th>
+              <th class="hide-sm">Major</th>
+              <th class="num">Points</th>
+            </tr>
+          </thead>
+          <tbody id="rows"><tr><td colspan="4" class="muted">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <footer id="site-footer"></footer>
+
+  <script type="module" src="js/layout.js"></script>
+  <script type="module">
+    import { config } from "./js/config.js";
+    import { leaderboard } from "./js/data.js";
+    import { esc } from "./js/util.js";
+
+    const semBtn = document.querySelector("#range-semester");
+    const allBtn = document.querySelector("#range-all");
+    const rowsEl = document.querySelector("#rows");
+    const podiumEl = document.querySelector("#podium");
+    const searchEl = document.querySelector("#search");
+    semBtn.textContent = config.currentSemester.name;
+
+    let rows = [];
+
+    async function load(semester) {
+      semBtn.setAttribute("aria-pressed", String(semester));
+      allBtn.setAttribute("aria-pressed", String(!semester));
+      try {
+        rows = await leaderboard(semester ? new Date(config.currentSemester.start + "T00:00:00") : null);
+      } catch (err) {
+        console.error(err);
+        rowsEl.innerHTML = `<tr><td colspan="4" class="notice-error">Couldn't load leaderboard: ${esc(err.message)}</td></tr>`;
+        return;
+      }
+      renderPodium();
+      renderRows();
+    }
+
+    function renderPodium() {
+      const medals = ["🥇", "🥈", "🥉"];
+      const top = rows.filter((r) => r.total_points > 0).slice(0, 3);
+      podiumEl.innerHTML = top.map((r, i) => `
+        <div class="podium-spot p${i + 1}">
+          <div class="medal" aria-hidden="true">${medals[r.rank - 1] || medals[2]}</div>
+          <div class="name">${esc(r.name)}</div>
+          <div class="pts">${r.total_points}</div>
+          <div class="muted sub">${esc(r.major || "")}</div>
+        </div>`).join("");
+    }
+
+    function renderRows() {
+      const q = searchEl.value.trim().toLowerCase();
+      const max = Math.max(1, ...rows.map((r) => r.total_points));
+      const shown = rows.filter((r) => !q || r.name.toLowerCase().includes(q));
+      rowsEl.innerHTML = shown.length
+        ? shown.map((r) => `
+          <tr>
+            <td class="rank">#${r.rank}</td>
+            <td>
+              <strong>${esc(r.name)}</strong>
+              <div class="bar"><span style="width:${(r.total_points / max) * 100}%"></span></div>
+            </td>
+            <td class="hide-sm muted">${esc(r.major || "—")}</td>
+            <td class="num"><strong>${r.total_points}</strong></td>
+          </tr>`).join("")
+        : `<tr><td colspan="4" class="muted">No members found.</td></tr>`;
+    }
+
+    semBtn.onclick = () => load(true);
+    allBtn.onclick = () => load(false);
+    searchEl.oninput = renderRows;
+    load(true);
+  </script>
+</body>
+</html>
