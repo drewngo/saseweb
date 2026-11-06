@@ -131,6 +131,11 @@
                 <input type="hidden" id="m-id" />
                 <div class="field"><label for="m-name">Name</label><input id="m-name" required /></div>
                 <div class="field-row">
+                  <div class="field"><label for="m-wsu">WSU ID</label><input id="m-wsu" autocomplete="off" spellcheck="false" placeholder="e.g. A123B456" /></div>
+                  <div class="field" style="display:flex; align-items:end;"><label style="display:flex; gap:8px; align-items:center; font-weight:400; margin:0 0 12px;"><input type="checkbox" id="m-paid" /> Paid member</label></div>
+                </div>
+                <p class="muted" style="font-size:.85rem; margin:-6px 0 14px;">Officers only: WSU IDs never appear on the public site. Only paid members are ranked.</p>
+                <div class="field-row">
                   <div class="field"><label for="m-major">Major</label><input id="m-major" /></div>
                   <div class="field"><label for="m-year">Class year</label><input id="m-year" placeholder="e.g. Junior" /></div>
                 </div>
@@ -142,13 +147,13 @@
               </form>
               <form id="bulk-form" class="card" style="margin-top:20px;">
                 <h3>Bulk add</h3>
-                <p class="muted" style="font-size:.9rem;">One name per line, e.g. pasted from a sign-in sheet.</p>
+                <p class="muted" style="font-size:.9rem;">One name per line, e.g. pasted from a sign-in sheet. Add WSU IDs afterwards with Edit.</p>
                 <div class="field"><textarea id="bulk-names" rows="5"></textarea></div>
                 <button class="btn btn-ghost" type="submit">Add all</button>
               </form>
             </div>
             <div>
-              <div class="toolbar"><input type="search" id="member-search" placeholder="Filter members…" /></div>
+              <div class="toolbar"><input type="search" id="member-search" placeholder="Filter by name or WSU ID…" /></div>
               <div class="table-wrap"><table><tbody id="member-rows"></tbody></table></div>
             </div>
           </div>
