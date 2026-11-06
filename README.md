@@ -91,7 +91,17 @@ Log in at `/admin.html`. The link is also in the footer.
 
 A member can only get attendance points once per event, so double-clicking or re-submitting won't double-count.
 
-**Everything in the database is publicly readable,** since that's how the leaderboard works. Only store names, majors, and class years. **Never store** emails, student IDs, or phone numbers. Let members know their name and points will be shown publicly.
+**Names, points and paid status are public,** since that's how the leaderboard works. Let members know their name and points are shown publicly.
+
+WSU IDs live in a separate `member_private` table that only signed-in officers can read. The public leaderboard can look a member up by their exact WSU ID, but it never shows the ID. Never store emails or phone numbers in Supabase.
+
+Only paid members are ranked. Unpaid members show in grey, with the rank they'd have once they pay. To mark someone paid, run this in the SQL Editor (the admin panel can't do it yet):
+
+```sql
+update public.member_private set paid_member = true where lower(wsu_id) = lower('A123B456');
+```
+
+The SQL files in `supabase/` besides `schema.sql` are one-time migrations for the existing project. `schema.sql` already includes them for a fresh setup.
 
 ## Branding & placeholders
 
@@ -104,15 +114,13 @@ Logo files live in `site/assets/logo/`:
 | `sase-icon.png` | Gold/cream icon for use on navy backgrounds |
 | `sase-square.png`, `favicon-32.png`, `apple-touch-icon.png` | Link previews, browser tab, phone home screen |
 
-The color palette comes from the logos and is set at the top of `site/css/style.css`:
-- navy `#1f2b6b`
-- light blue `#8fb4f0`
-- gold `#e8cfa8`
-- cream `#f3e9dc`
+The colors come from the SASE Brand Guide 2025 (national colorway) and are set at the top of `site/css/style.css`:
+- navy blue `#141B4D`
+- national blue `#89ABE3`
+- sandy brown `#DBC8B6`
+- brand white `#E9E8E8`
 
-These are slightly brightened from the logo files.
-
-Headings use the Saira font from Google Fonts.
+Headings use Saira, and body text uses IBM Plex Sans, both from Google Fonts. The brand guide PDF is kept out of the repo.
 
 Officer photos and sponsor logos are still placeholders. These are the dashed boxes; search the HTML for `img-placeholder` and `logo-placeholder`. Put image files in `site/assets/`, then swap each placeholder `<div>` for an `<img>`.
 

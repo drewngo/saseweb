@@ -8,7 +8,7 @@
   <link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira:wght@600;700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Saira:wght@500;600&display=swap" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -20,6 +20,7 @@
         <div>
           <h1>Points leaderboard</h1>
           <p class="lead" style="margin:0;">Earn points by attending events, volunteering, and helping run the chapter.</p>
+          <p class="muted" style="margin:8px 0 0;">Only paid members are ranked, and the top 5 are shown. Search your name or WSU ID to see where you stand. If you haven't paid dues yet, you'll see where you'd place once you do.</p>
         </div>
         <div class="segmented" role="group" aria-label="Time range">
           <button id="range-semester" aria-pressed="true"></button>
@@ -30,7 +31,7 @@
       <div id="podium" class="podium"></div>
 
       <div class="toolbar">
-        <input type="search" id="search" placeholder="Find yourself…" aria-label="Search members" />
+        <input type="search" id="search" placeholder="Search by name or WSU ID" aria-label="Search by name or WSU ID" autocomplete="off" />
       </div>
       <div class="table-wrap">
         <table>
@@ -38,11 +39,10 @@
             <tr>
               <th>Rank</th>
               <th>Member</th>
-              <th class="hide-sm">Major</th>
               <th class="num">Points</th>
             </tr>
           </thead>
-          <tbody id="rows"><tr><td colspan="4" class="muted">Loading…</td></tr></tbody>
+          <tbody id="rows"><tr><td colspan="3" class="muted">Loading…</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -53,7 +53,7 @@
   <script type="module" src="js/layout.js"></script>
   <script type="module">
     import { config } from "./js/config.js";
-    import { leaderboard } from "./js/data.js";
+    import { leaderboard, findByWsuId } from "./js/data.js";
     import { esc } from "./js/util.js";
 
     const semBtn = document.querySelector("#range-semester");
@@ -64,15 +64,20 @@
     semBtn.textContent = config.currentSemester.name;
 
     let rows = [];
+    let since = null;
+    let searchToken = 0;
+    const TOP = 5;
+    const looksLikeId = (q) => /^[a-z]\d{3}[a-z]\d{3}$/i.test(q);
 
     async function load(semester) {
       semBtn.setAttribute("aria-pressed", String(semester));
       allBtn.setAttribute("aria-pressed", String(!semester));
       try {
-        rows = await leaderboard(semester ? new Date(config.currentSemester.start + "T00:00:00") : null);
+        since = semester ? new Date(config.currentSemester.start + "T00:00:00") : null;
+        rows = await leaderboard(since);
       } catch (err) {
         console.error(err);
-        rowsEl.innerHTML = `<tr><td colspan="4" class="notice-error">Couldn't load leaderboard: ${esc(err.message)}</td></tr>`;
+        rowsEl.innerHTML = `<tr><td colspan="3" class="notice-error">Couldn't load leaderboard: ${esc(err.message)}</td></tr>`;
         return;
       }
       renderPodium();
@@ -80,32 +85,41 @@
     }
 
     function renderPodium() {
-            const top = rows.filter((r) => r.total_points > 0).slice(0, 3);
+      const top = rows.filter((r) => r.paid !== false && r.total_points > 0).slice(0, 3);
       podiumEl.innerHTML = top.map((r, i) => `
         <div class="podium-spot p${i + 1}">
           <div class="medal medal-${Math.min(r.rank, 3)}" aria-label="Rank ${r.rank}">${r.rank}</div>
           <div class="name">${esc(r.name)}</div>
           <div class="pts">${r.total_points}</div>
-          <div class="muted sub">${esc(r.major || "")}</div>
         </div>`).join("");
     }
 
-    function renderRows() {
-      const q = searchEl.value.trim().toLowerCase();
+    async function renderRows() {
+      const token = ++searchToken;
+      const raw = searchEl.value.trim();
+      const q = raw.toLowerCase();
       const max = Math.max(1, ...rows.map((r) => r.total_points));
-      const shown = rows.filter((r) => !q || r.name.toLowerCase().includes(q));
+      let shown;
+      if (!q) {
+        shown = rows.filter((r) => r.paid !== false && r.rank <= TOP);   // the official top 5, ties included
+      } else if (looksLikeId(raw)) {
+        try { shown = await findByWsuId(raw, since); } catch (err) { console.error(err); shown = []; }
+        if (token !== searchToken) return;                               // a newer search has started
+      } else {
+        shown = rows.filter((r) => r.name.toLowerCase().includes(q));
+      }
       rowsEl.innerHTML = shown.length
         ? shown.map((r) => `
-          <tr>
+          <tr class="${r.paid === false ? "unpaid" : ""}">
             <td class="rank">#${r.rank}</td>
             <td>
               <strong>${esc(r.name)}</strong>
+              ${r.paid === false ? `<span class="unpaid-note">Not paid yet · would be #${r.rank}</span>` : ""}
               <div class="bar"><span style="width:${(r.total_points / max) * 100}%"></span></div>
             </td>
-            <td class="hide-sm muted">${esc(r.major || "—")}</td>
             <td class="num"><strong>${r.total_points}</strong></td>
           </tr>`).join("")
-        : `<tr><td colspan="4" class="muted">No members found.</td></tr>`;
+        : `<tr><td colspan="3" class="muted">${q ? "No member matches that name or WSU ID." : "No paid members have points yet."}</td></tr>`;
     }
 
     semBtn.onclick = () => load(true);
