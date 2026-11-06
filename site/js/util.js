@@ -10,7 +10,10 @@ export const fmtDate = (iso, opts = { weekday: "short", month: "short", day: "nu
 export const fmtTime = (iso) =>
   new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 
+// An event saved at exactly midnight with no end time has no time set yet.
 export function fmtTimeRange(ev) {
+  const start = new Date(ev.starts_at);
+  if (!ev.ends_at && start.getHours() === 0 && start.getMinutes() === 0) return "Time TBA";
   return ev.ends_at ? `${fmtTime(ev.starts_at)} – ${fmtTime(ev.ends_at)}` : fmtTime(ev.starts_at);
 }
 

@@ -8,6 +8,7 @@ let members = [];
 let events = [];
 let history = [];
 let allTimeTotals = new Map();
+let privateInfo = new Map();   // member_id -> { wsu_id, paid }; officers only
 
 function show(name) {
   for (const [k, el] of Object.entries(views)) el.classList.toggle("hidden", k !== name);
@@ -81,8 +82,8 @@ document.querySelectorAll("[data-tab]").forEach((tab) =>
 async function reloadAll() {
   await guarded(async () => {
     let board;
-    [members, events, history, board] = await Promise.all([
-      db.listMembers(), db.listEvents(), db.recentEntries(500), db.leaderboard(null),
+    [members, events, history, board, privateInfo] = await Promise.all([
+      db.listMembers(), db.listEvents(), db.recentEntries(500), db.leaderboard(null), db.listMemberPrivate(),
     ]);
     allTimeTotals = new Map(board.map((r) => [r.member_id, r.total_points]));
     renderAwardEventOptions();
@@ -289,21 +290,40 @@ function renderMembers() {
   const q = $("#member-search").value.trim().toLowerCase();
   $("#member-rows").innerHTML =
     members
-      .filter((m) => !q || m.name.toLowerCase().includes(q))
-      .map((m) => `
+      .filter((m) => !q || m.name.toLowerCase().includes(q) || (privateInfo.get(m.id)?.wsu_id || "").toLowerCase().includes(q))
+      .map((m) => {
+        const p = privateInfo.get(m.id);
+        return `
         <tr>
           <td>
             <strong>${esc(m.name)}</strong>${m.active ? "" : ` <span class="tag">hidden</span>`}
-            <div class="muted" style="font-size:.85rem;">${esc([m.major, m.class_year].filter(Boolean).join(" · ") || "—")}</div>
+            <div class="muted" style="font-size:.85rem;">${p ? `WSU ID ${esc(p.wsu_id)}` : "No WSU ID yet"}${[m.major, m.class_year].filter(Boolean).length ? ` · ${esc([m.major, m.class_year].filter(Boolean).join(" · "))}` : ""}</div>
+          </td>
+          <td>
+            <label style="display:flex; gap:6px; align-items:center; font-weight:400; margin:0; white-space:nowrap;"${p ? "" : ' title="Add a WSU ID first"'}>
+              <input type="checkbox" data-paid-member="${m.id}"${p?.paid ? " checked" : ""}${p ? "" : " disabled"} /> Paid
+            </label>
           </td>
           <td class="num">${allTimeTotals.has(m.id) ? `${allTimeTotals.get(m.id)} pts` : "—"}</td>
           <td class="row-actions">
             <button class="btn btn-ghost btn-sm" data-edit-member="${m.id}">Edit</button>
             <button class="btn btn-danger btn-sm" data-delete-member="${m.id}">Delete</button>
           </td>
-        </tr>`)
+        </tr>`;
+      })
       .join("") || `<tr><td class="muted">No members.</td></tr>`;
 }
+
+$("#member-rows").addEventListener("change", (e) => {
+  const id = e.target.dataset.paidMember;
+  if (!id) return;
+  const paid = e.target.checked;
+  guarded(async () => {
+    await db.setPaid(id, paid);
+    privateInfo.get(id).paid = paid;
+    flash(`${members.find((m) => m.id === id).name} marked ${paid ? "paid" : "not paid"}.`);
+  }).then(renderMembers);   // on failure, puts the checkbox back to the saved value
+});
 
 $("#member-search").addEventListener("input", renderMembers);
 
@@ -325,6 +345,8 @@ $("#member-rows").addEventListener("click", (e) => {
     $("#m-major").value = m.major || "";
     $("#m-year").value = m.class_year || "";
     $("#m-active").checked = m.active;
+    $("#m-wsu").value = privateInfo.get(m.id)?.wsu_id || "";
+    $("#m-paid").checked = !!privateInfo.get(m.id)?.paid;
     $("#member-form-title").textContent = "Edit member";
     $("#member-form").scrollIntoView({ behavior: "smooth" });
   }
@@ -348,6 +370,8 @@ $("#member-form").addEventListener("submit", (e) => {
       major: $("#m-major").value.trim() || null,
       class_year: $("#m-year").value.trim() || null,
       active: $("#m-active").checked,
+      wsu_id: $("#m-wsu").value.trim(),
+      paid: $("#m-paid").checked,
     };
     if ($("#m-id").value) m.id = $("#m-id").value;
     await db.saveMember(m);

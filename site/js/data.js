@@ -191,11 +191,49 @@ export async function deleteEvent(id) {
   unwrap(await (await sb()).from("events").delete().eq("id", id));
 }
 
+// WSU IDs and paid status: officers only (member_private; RLS hides it from everyone else).
+// Returns Map(member_id -> { wsu_id, paid }).
+export async function listMemberPrivate() {
+  if (isDemo) {
+    return new Map(demo.members.filter((m) => m.wsu_id).map((m) => [m.id, { wsu_id: m.wsu_id, paid: !!m.paid }]));
+  }
+  const rows = unwrap(await (await sb()).from("member_private").select("member_id, wsu_id, paid_member"));
+  return new Map(rows.map((r) => [r.member_id, { wsu_id: r.wsu_id, paid: r.paid_member }]));
+}
+
+// member: { id?, name, major, class_year, active, wsu_id?, paid? }
+// A blank WSU ID removes the private row (paid status needs a WSU ID to attach to).
 export async function saveMember(member) {
-  if (isDemo) return upsertDemo(demo.members, { active: true, ...member });
-  const { id, ...fields } = member;
-  const q = (await sb()).from("members");
-  return unwrap(await (id ? q.update(fields).eq("id", id) : q.insert(fields)).select().single());
+  const { wsu_id, paid, ...pub } = member;
+  const wsu = (wsu_id || "").trim();
+  if (paid && !wsu) throw new Error("Add a WSU ID before marking someone as paid.");
+  if (wsu && !/^[a-z0-9]+$/i.test(wsu)) throw new Error("A WSU ID can only contain letters and numbers.");
+  if (isDemo) return upsertDemo(demo.members, { active: true, ...pub, wsu_id: wsu || null, paid: !!paid });
+
+  const client = await sb();
+  if (wsu) {
+    const clash = unwrap(await client.from("member_private").select("member_id").ilike("wsu_id", wsu));
+    if (clash.some((r) => r.member_id !== pub.id)) throw new Error(`WSU ID ${wsu} already belongs to another member.`);
+  }
+  const { id, ...fields } = pub;
+  const q = client.from("members");
+  const saved = unwrap(await (id ? q.update(fields).eq("id", id) : q.insert(fields)).select().single());
+  if (wsu) {
+    unwrap(await client.from("member_private")
+      .upsert({ member_id: saved.id, wsu_id: wsu, paid_member: !!paid }, { onConflict: "member_id" }));
+  } else {
+    unwrap(await client.from("member_private").delete().eq("member_id", saved.id));
+  }
+  return saved;
+}
+
+export async function setPaid(memberId, paid) {
+  if (isDemo) {
+    const m = demo.members.find((x) => x.id === memberId);
+    if (m) m.paid = paid;
+    return;
+  }
+  unwrap(await (await sb()).from("member_private").update({ paid_member: paid }).eq("member_id", memberId));
 }
 
 export async function addMembers(names) {
