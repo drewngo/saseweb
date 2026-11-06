@@ -1,3 +1,8 @@
 .DS_Store
 node_modules/
 .env
+db/*.db
+db/supabase_import.sql
+
+# Private: never commit
+SASE - Brand Guide.pdf

@@ -13,7 +13,7 @@
   <link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira:wght@600;700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Saira:wght@500;600&display=swap" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -86,14 +86,21 @@
     <section class="section">
       <div class="container">
         <div class="section-head"><h2>Executive board</h2></div>
-        <!-- Replace the placeholders with real names and photos (assets/officers/…). -->
+        <!-- Photos: put a square photo in assets/officers/ (e.g. kaymie-nguyen.jpg), then replace that
+             officer's <div class="officer-initials">..</div> with
+             <img class="officer-photo" src="assets/officers/kaymie-nguyen.jpg" alt="" width="104" height="104" /> -->
         <div class="officers">
-          <div class="officer"><div class="img-placeholder">Photo</div><strong>Name</strong><span>President</span></div>
-          <div class="officer"><div class="img-placeholder">Photo</div><strong>Name</strong><span>Vice President</span></div>
-          <div class="officer"><div class="img-placeholder">Photo</div><strong>Name</strong><span>Secretary</span></div>
-          <div class="officer"><div class="img-placeholder">Photo</div><strong>Name</strong><span>Treasurer</span></div>
-          <div class="officer"><div class="img-placeholder">Photo</div><strong>Name</strong><span>Events Chair</span></div>
-          <div class="officer"><div class="img-placeholder">Photo</div><strong>Name</strong><span>Marketing Chair</span></div>
+          <div class="officer"><div class="officer-initials" aria-hidden="true">KN</div><strong>Kaymie Nguyen</strong><span>President</span></div>
+          <div class="officer"><div class="officer-initials" aria-hidden="true">AN</div><strong>Andrew Ngo</strong><span>External Vice President</span></div>
+          <div class="officer"><div class="officer-initials" aria-hidden="true">PD</div><strong>Preston Dinh</strong><span>Internal Vice President</span></div>
+          <div class="officer"><div class="officer-initials" aria-hidden="true">RR</div><strong>Ronish Rasaily</strong><span>Secretary</span></div>
+          <div class="officer"><div class="officer-initials" aria-hidden="true">LN</div><strong>Linda Nguyen</strong><span>Treasurer</span></div>
+          <div class="officer"><div class="officer-initials" aria-hidden="true">JH</div><strong>Jasmine Huynh</strong><span>Event Coordinator</span></div>
+          <div class="officer"><div class="officer-initials" aria-hidden="true">JN</div><strong>Jacob Nguyen</strong><span>Event Coordinator</span></div>
+          <div class="officer"><div class="officer-initials" aria-hidden="true">SB</div><strong>Sophia Ballos</strong><span>Media Coordinator</span></div>
+          <div class="officer"><div class="officer-initials" aria-hidden="true">VT</div><strong>Vina Truong</strong><span>Media Coordinator</span></div>
+          <div class="officer"><div class="officer-initials" aria-hidden="true">AH</div><strong>Austin Helgerson</strong><span>Professional Development Chair</span></div>
+          <div class="officer"><div class="officer-initials" aria-hidden="true">VN</div><strong>Viet Nguyen</strong><span>Fundraising Chair</span></div>
         </div>
       </div>
     </section>
@@ -102,10 +109,8 @@
       <div class="container">
         <div class="section-head"><h2>Sponsors &amp; partners</h2></div>
         <div class="sponsor-row">
-          <div class="logo-placeholder">Sponsor</div>
-          <div class="logo-placeholder">Sponsor</div>
-          <div class="logo-placeholder">Sponsor</div>
-          <div class="logo-placeholder">Sponsor</div>
+          <a class="sponsor" href="https://mochinutwichita.com/" target="_blank" rel="noopener">Mochinut Wichita</a>
+          <a class="sponsor" href="https://www.lunarpickleball.com/" target="_blank" rel="noopener">Lunar Pickleball</a>
         </div>
       </div>
     </section>
@@ -142,14 +147,14 @@
       .then((events) => {
         upcomingEl.innerHTML = events.length
           ? events.map((e) => eventCard(e, { compact: true })).join("")
-          : `<p class="muted">No upcoming events yet. Check back soon!</p>`;
+          : `<p class="muted">No upcoming events yet. Check back soon.</p>`;
       })
       .catch((err) => showError(upcomingEl, err));
 
     const topEl = document.querySelector("#top-members");
     leaderboard(new Date(config.currentSemester.start + "T00:00:00"))
       .then((rows) => {
-        const top = rows.filter((r) => r.total_points > 0).slice(0, 5);
+        const top = rows.filter((r) => r.paid !== false && r.total_points > 0).slice(0, 5);
         topEl.innerHTML = top.length
           ? `<p class="muted" style="margin-bottom:4px;">${esc(config.currentSemester.name)}</p>
              <ol>${top.map((r) => `<li><span><span class="r">${r.rank}</span>${esc(r.name)}</span><strong>${r.total_points} pts</strong></li>`).join("")}</ol>`

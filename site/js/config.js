@@ -5,8 +5,8 @@
 // to be public; Row Level Security (supabase/schema.sql) keeps writes admin-only.
 
 export const config = {
-  supabaseUrl: "",
-  supabaseAnonKey: "",
+  supabaseUrl: "https://rsanufwiyoicrgpkzrje.supabase.co",
+  supabaseAnonKey: "sb_publishable_NXq2GcTvpUZioskF0oMRlw_PzeRsYK9",
 
   orgName: "SASE",
   orgFullName: "Society of Asian Scientists and Engineers",
@@ -15,11 +15,11 @@ export const config = {
   // The leaderboard's "This semester" view counts points awarded on or after this date.
   currentSemester: { name: "Fall 2026", start: "2026-08-17" },
 
-  contactEmail: "sase@example.edu", // placeholder
+  contactEmail: "wichita@saseconnect.org",
   links: {
-    instagram: "#", // placeholder
-    discord: "#",   // placeholder
-    linkedin: "#",  // placeholder
-    join: "#",      // placeholder: ShockerSync / sign-up form
+    instagram: "https://www.instagram.com/wsu_sase/",
+    discord: "https://discord.gg/VwQhFkzWNH",
+    linkedin: "https://www.linkedin.com/company/sase-wsu/",
+    join: "https://wichita.campuslabs.com/engage/organization/societyofasianscientistsandengineers",
   },
 };

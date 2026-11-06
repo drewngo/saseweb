@@ -51,8 +51,8 @@ const demo = (() => {
     ["Marcus Lee", "Computer Science", "Senior"],
     ["Linh Pham", "Electrical Engineering", "Sophomore"],
   ];
-  const members = names.map(([name, major, class_year]) => ({
-    id: id(), name, major, class_year, active: true, created_at: new Date().toISOString(),
+  const members = names.map(([name, major, class_year], i) => ({
+    id: id(), name, major, class_year, active: true, paid: i % 4 !== 2, created_at: new Date().toISOString(),
   }));
 
   const ev = (title, offset, hour, dur, points, category, location, description) => ({
@@ -115,18 +115,25 @@ export async function leaderboard(since = null) {
     const totals = demo.members
       .filter((m) => m.active)
       .map((m) => ({
-        member_id: m.id, name: m.name, major: m.major, class_year: m.class_year,
+        member_id: m.id, name: m.name, major: m.major, class_year: m.class_year, paid: m.paid,
         total_points: demo.entries
           .filter((p) => p.member_id === m.id && (!since || new Date(p.awarded_at) >= since))
           .reduce((s, p) => s + p.points, 0),
       }))
       .sort((a, b) => b.total_points - a.total_points || a.name.localeCompare(b.name));
-    totals.forEach((r, i) => {
-      r.rank = i > 0 && r.total_points === totals[i - 1].total_points ? totals[i - 1].rank : i + 1;
+    // Same rule as the database: rank among paid members; unpaid get the rank they would have.
+    totals.forEach((r) => {
+      r.rank = 1 + totals.filter((o) => o.paid && o.total_points > r.total_points).length;
     });
     return totals;
   }
   return unwrap(await (await sb()).rpc("leaderboard", { since: since ? since.toISOString() : null }));
+}
+
+// One member's leaderboard row by exact WSU ID (case-insensitive). The ID itself is never returned.
+export async function findByWsuId(wsuId, since = null) {
+  if (isDemo) return [];
+  return unwrap(await (await sb()).rpc("leaderboard_find", { id_query: wsuId, since: since ? since.toISOString() : null }));
 }
 
 export async function listMembers() {
